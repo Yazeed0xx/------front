@@ -6,7 +6,7 @@ import { PortalHost } from '@rn-primitives/portal';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
-
+import i18n from '@/lib/i18n';
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
@@ -18,7 +18,16 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      <Stack />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen 
+          name="halls/[id]" 
+          options={{ 
+            presentation: 'card',
+            animation: 'fade_from_bottom',
+          }} 
+        />
+      </Stack>
       <PortalHost />
     </ThemeProvider>
   );

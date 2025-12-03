@@ -1,60 +1,116 @@
 import { DarkTheme, DefaultTheme, type Theme } from '@react-navigation/native';
- 
+
+/**
+ * Wedding Hall Booking App - Lavender Theme
+ * 
+ * A dreamy, romantic lavender palette:
+ * 
+ * Light Theme:
+ * - Background: Soft lavender-tinted white
+ * - Primary: Beautiful lavender (#8B6DB5)
+ * - Accent: Wisteria purple (#B382D4)
+ * - Secondary: Light lavender tint
+ * 
+ * Dark Theme:
+ * - Background: Deep purple-black
+ * - Primary: Bright lavender (#A98FD4)
+ * - Accent: Bright wisteria (#C49AE0)
+ * - Secondary: Dark purple surfaces
+ */
+
 export const THEME = {
   light: {
-    background: 'hsl(0 0% 100%)',
-    foreground: 'hsl(0 0% 3.9%)',
-    card: 'hsl(0 0% 100%)',
-    cardForeground: 'hsl(0 0% 3.9%)',
-    popover: 'hsl(0 0% 100%)',
-    popoverForeground: 'hsl(0 0% 3.9%)',
-    primary: 'hsl(0 0% 9%)',
-    primaryForeground: 'hsl(0 0% 98%)',
-    secondary: 'hsl(0 0% 96.1%)',
-    secondaryForeground: 'hsl(0 0% 9%)',
-    muted: 'hsl(0 0% 96.1%)',
-    mutedForeground: 'hsl(0 0% 45.1%)',
-    accent: 'hsl(0 0% 96.1%)',
-    accentForeground: 'hsl(0 0% 9%)',
-    destructive: 'hsl(0 84.2% 60.2%)',
-    border: 'hsl(0 0% 89.8%)',
-    input: 'hsl(0 0% 89.8%)',
-    ring: 'hsl(0 0% 63%)',
-    radius: '0.625rem',
-    chart1: 'hsl(12 76% 61%)',
-    chart2: 'hsl(173 58% 39%)',
-    chart3: 'hsl(197 37% 24%)',
-    chart4: 'hsl(43 74% 66%)',
-    chart5: 'hsl(27 87% 67%)',
+    // Base
+    background: 'hsl(270 30% 99%)',
+    foreground: 'hsl(270 20% 15%)',
+    
+    // Card
+    card: 'hsl(270 40% 99%)',
+    cardForeground: 'hsl(270 20% 15%)',
+    
+    // Popover
+    popover: 'hsl(270 40% 99%)',
+    popoverForeground: 'hsl(270 20% 15%)',
+    
+    // Primary - Beautiful Lavender
+    primary: 'hsl(262 60% 58%)',
+    primaryForeground: 'hsl(0 0% 100%)',
+    
+    // Secondary - Light Lavender Tint
+    secondary: 'hsl(270 35% 95%)',
+    secondaryForeground: 'hsl(262 40% 30%)',
+    
+    // Muted
+    muted: 'hsl(270 20% 94%)',
+    mutedForeground: 'hsl(270 10% 45%)',
+    
+    // Accent - Wisteria Purple
+    accent: 'hsl(280 65% 65%)',
+    accentForeground: 'hsl(0 0% 100%)',
+    
+    // Destructive
+    destructive: 'hsl(0 84% 60%)',
+    
+    // Borders & Input
+    border: 'hsl(270 25% 90%)',
+    input: 'hsl(270 25% 90%)',
+    ring: 'hsl(262 60% 58%)',
+    radius: '0.75rem',
+    
+    // Charts
+    chart1: 'hsl(262 60% 58%)',
+    chart2: 'hsl(280 65% 65%)',
+    chart3: 'hsl(320 55% 65%)',
+    chart4: 'hsl(220 60% 65%)',
+    chart5: 'hsl(45 70% 60%)',
   },
   dark: {
-    background: 'hsl(0 0% 3.9%)',
-    foreground: 'hsl(0 0% 98%)',
-    card: 'hsl(0 0% 3.9%)',
-    cardForeground: 'hsl(0 0% 98%)',
-    popover: 'hsl(0 0% 3.9%)',
-    popoverForeground: 'hsl(0 0% 98%)',
-    primary: 'hsl(0 0% 98%)',
-    primaryForeground: 'hsl(0 0% 9%)',
-    secondary: 'hsl(0 0% 14.9%)',
-    secondaryForeground: 'hsl(0 0% 98%)',
-    muted: 'hsl(0 0% 14.9%)',
-    mutedForeground: 'hsl(0 0% 63.9%)',
-    accent: 'hsl(0 0% 14.9%)',
-    accentForeground: 'hsl(0 0% 98%)',
-    destructive: 'hsl(0 70.9% 59.4%)',
-    border: 'hsl(0 0% 14.9%)',
-    input: 'hsl(0 0% 14.9%)',
-    ring: 'hsl(300 0% 45%)',
-    radius: '0.625rem',
-    chart1: 'hsl(220 70% 50%)',
-    chart2: 'hsl(160 60% 45%)',
-    chart3: 'hsl(30 80% 55%)',
-    chart4: 'hsl(280 65% 60%)',
-    chart5: 'hsl(340 75% 55%)',
+    // Base
+    background: 'hsl(270 25% 6%)',
+    foreground: 'hsl(270 20% 96%)',
+    
+    // Card
+    card: 'hsl(270 20% 10%)',
+    cardForeground: 'hsl(270 20% 96%)',
+    
+    // Popover
+    popover: 'hsl(270 20% 10%)',
+    popoverForeground: 'hsl(270 20% 96%)',
+    
+    // Primary - Bright Lavender
+    primary: 'hsl(262 55% 68%)',
+    primaryForeground: 'hsl(270 25% 6%)',
+    
+    // Secondary
+    secondary: 'hsl(270 20% 16%)',
+    secondaryForeground: 'hsl(270 20% 90%)',
+    
+    // Muted
+    muted: 'hsl(270 15% 14%)',
+    mutedForeground: 'hsl(270 15% 55%)',
+    
+    // Accent - Bright Wisteria
+    accent: 'hsl(280 60% 70%)',
+    accentForeground: 'hsl(270 25% 6%)',
+    
+    // Destructive
+    destructive: 'hsl(0 72% 55%)',
+    
+    // Borders & Input
+    border: 'hsl(270 15% 20%)',
+    input: 'hsl(270 15% 20%)',
+    ring: 'hsl(262 55% 68%)',
+    radius: '0.75rem',
+    
+    // Charts
+    chart1: 'hsl(262 55% 65%)',
+    chart2: 'hsl(280 60% 68%)',
+    chart3: 'hsl(320 50% 62%)',
+    chart4: 'hsl(220 55% 62%)',
+    chart5: 'hsl(45 65% 55%)',
   },
 };
- 
+
 export const NAV_THEME: Record<'light' | 'dark', Theme> = {
   light: {
     ...DefaultTheme,
