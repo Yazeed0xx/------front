@@ -50,8 +50,8 @@ export default function HallDetailScreen() {
 
   const infoTiles = [
     { icon: '👥', label: 'Capacity', value: `${hall.minCapacity}-${hall.capacity}` },
-    { icon: '💵', label: 'Per Guest', value: `$${hall.pricePerPerson}` },
-    { icon: '🏷️', label: 'Base Fee', value: `$${hall.basePrice.toLocaleString()}` },
+    { icon: '💵', label: 'Per Guest', value: `${hall.pricePerPerson} sr` },
+      { icon: '🏷️', label: 'Base Fee', value: `${hall.basePrice ? hall.basePrice.toLocaleString() : 0} sr` },
     { icon: '🕒', label: 'Hours', value: hall.openHours },
   ];
 

@@ -15,10 +15,10 @@ export type Hall = {
   originalPrice?: number;
   capacity: number;
   rating: number;
-  reviews: number;
-  type: string;
   amenities: string[];
+  type: string;
   featured?: boolean;
+  reviews?: number;
 };
 
 type HallCardProps = {
@@ -85,10 +85,10 @@ export function HallCard({ hall, onBook, onDetails }: HallCardProps) {
 
           <View className="flex-row items-center justify-between mt-3">
             <View className="flex-row items-baseline gap-1">
-              <Text className="text-primary font-semibold text-lg">${hall.price.toLocaleString()}</Text>
+                  <Text className="text-primary font-semibold text-lg">{hall.price.toLocaleString()} sr</Text>
               {hall.originalPrice && (
                 <Text className="text-muted-foreground line-through text-[11px]">
-                  ${hall.originalPrice.toLocaleString()}
+                  {hall.originalPrice.toLocaleString()} sr
                 </Text>
               )}
             </View>

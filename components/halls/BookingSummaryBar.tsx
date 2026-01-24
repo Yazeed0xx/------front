@@ -27,7 +27,7 @@ export function BookingSummaryBar({
       <View className="flex-row items-start justify-between gap-3">
         <View className="flex-1">
           <Text className="text-xs text-muted-foreground">Total</Text>
-          <Text className="text-xl font-bold text-primary">${totalPrice.toLocaleString()}</Text>
+          <Text className="text-xl font-bold text-primary">{totalPrice.toLocaleString()} sr</Text>
           <Text className="text-[10px] text-muted-foreground">
             {guestCount} guests{servicesCount > 0 && ` · ${servicesCount} services`}
           </Text>

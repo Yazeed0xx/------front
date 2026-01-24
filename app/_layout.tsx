@@ -21,6 +21,20 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen 
+          name="login" 
+          options={{ 
+            presentation: 'card',
+            animation: 'fade_from_bottom',
+          }} 
+        />
+        <Stack.Screen 
+          name="register" 
+          options={{ 
+            presentation: 'card',
+            animation: 'fade_from_bottom',
+          }} 
+        />
+        <Stack.Screen 
           name="halls/[id]" 
           options={{ 
             presentation: 'card',
