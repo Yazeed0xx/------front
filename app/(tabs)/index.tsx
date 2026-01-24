@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useTranslation } from 'react-i18next';
+import { authClient } from '@/lib/auth';
 
 const halls = [
   {
@@ -44,6 +45,7 @@ const upcomingBooking = {
 };
 
 export default function HomeScreen() {
+  const { data: session } = authClient.useSession();
   const { t } = useTranslation();
   const { colorScheme } = useColorScheme();
   const placeholderColor = React.useMemo(() => {
@@ -58,14 +60,14 @@ export default function HomeScreen() {
           <View className="bg-primary rounded-3xl p-5 border border-primary/40">
             <View className="flex-row justify-between items-center mb-6">
               <View className="flex-1 pr-3">
-                <Text className="text-primary-foreground/90 text-xs">{t('welcome')}</Text>
+                <Text className="text-primary-foreground/90 text-xs">{t('welcome', { name: session?.user?.name?.charAt(0) ?? '' })}</Text>
                 <Text className="text-primary-foreground text-2xl font-semibold mt-1">
-                  {t('heroTitle')}
+                  {t('heroTitle', { name: session?.user?.name?.charAt(0) ?? '' })}
                 </Text>
               </View>
               <Avatar alt="User profile" className="w-12 h-12 bg-primary-foreground/20">
                 <AvatarFallback>
-                  <Text className="text-primary-foreground text-sm">YA</Text>
+                    <Text className="text-primary- text-sm">{session?.user?.name?.charAt(0)}</Text>
                 </AvatarFallback>
               </Avatar>
             </View>
@@ -136,10 +138,10 @@ export default function HomeScreen() {
 
                   <View className="flex-row justify-between items-center mb-2">
                     <View className="flex-row items-baseline gap-2">
-                      <Text className="text-primary font-bold text-xl">${hall.price.toLocaleString()}</Text>
+                      <Text className="text-primary font-bold text-xl">{hall.price.toLocaleString()}sr</Text>
                       {hall.originalPrice && (
                         <Text className="text-muted-foreground line-through text-sm">
-                          ${hall.originalPrice.toLocaleString()}
+                          {hall.originalPrice.toLocaleString()} sar
                         </Text>
                       )}
                     </View>

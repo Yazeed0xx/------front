@@ -148,7 +148,7 @@ const allHalls: Hall[] = [
 
 // Filter options
 const typeFilters = ['All', 'Ballroom', 'Garden', 'Beach', 'Rooftop', 'Indoor', 'Outdoor'];
-const priceFilters = ['All', 'Under $3k', '$3k-$5k', '$5k-$7k', '$7k+'];
+const priceFilters = ['All', 'Under 3k', '3k-5k', '5k-7k', '7k+'];
 const capacityFilters = ['All', '< 100', '100-200', '200-300', '300+'];
 const sortOptions = ['Recommended', 'Price: Low', 'Price: High', 'Rating', 'Capacity'];
 
@@ -181,16 +181,16 @@ export default function HallsScreen() {
     // Price filter
     if (selectedPrice !== 'All') {
       switch (selectedPrice) {
-        case 'Under $3k':
+        case 'Under 3k':
           halls = halls.filter((h) => h.price < 3000);
           break;
-        case '$3k-$5k':
+        case '3k-5k':
           halls = halls.filter((h) => h.price >= 3000 && h.price <= 5000);
           break;
-        case '$5k-$7k':
+        case '5k-7k':
           halls = halls.filter((h) => h.price > 5000 && h.price <= 7000);
           break;
-        case '$7k+':
+        case '7k+':
           halls = halls.filter((h) => h.price > 7000);
           break;
       }

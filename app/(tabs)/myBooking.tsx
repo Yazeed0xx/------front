@@ -132,7 +132,7 @@ function BookingCard({ booking, isUpcoming }: { booking: Booking; isUpcoming: bo
         <View className="flex-row items-center justify-between pt-2 border-t border-border/40">
           <View>
             <Text className="text-xs text-muted-foreground">{t('total')}</Text>
-            <Text className="font-bold text-primary text-lg">${booking.total.toLocaleString()}</Text>
+            <Text className="font-bold text-primary text-lg">{booking.total.toLocaleString()} sr</Text>
           </View>
           {isUpcoming ? (
             <View className="flex-row gap-2">

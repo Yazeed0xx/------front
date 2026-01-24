@@ -8,22 +8,31 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Icon } from '@/components/ui/icon';
-import { Settings, KeyRound, Globe, Moon, HelpCircle, Phone, LogOut, ChevronRight } from 'lucide-react-native';
+import { Settings, KeyRound, Globe, Moon, HelpCircle, Phone, LogOut, ChevronRight, LogIn } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n from '@/lib/i18n';
+import { useNavigation } from '@react-navigation/native';
+import { authClient } from '@/lib/auth';
+import { router } from 'expo-router';
+import { useTheme } from '@/lib/theme-context';
 
 export default function ProfileScreen() {
+  const {data:session} = authClient.useSession() 
   const { t } = useTranslation();
-  const [darkMode, setDarkMode] = useState(false);
+  const { theme, setTheme, isDark } = useTheme();
   const [language, setLanguage] = useState<'en' | 'ar'>(i18n.language as 'en' | 'ar');
-
+  const navigation = useNavigation();
   const changeLanguage = async () => {
     const newLang = language === 'en' ? 'ar' : 'en';
     setLanguage(newLang);
     await i18n.changeLanguage(newLang);
     await AsyncStorage.setItem('language', newLang);
   }; 
+  const handleLogout = async () => {
+    await authClient.signOut();
+    navigation.navigate('login' as never);
+  };
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
@@ -39,13 +48,13 @@ export default function ProfileScreen() {
               <View className="flex-row items-center gap-4">
                 <Avatar alt="User avatar" className="w-16 h-16 bg-primary">
                   <AvatarFallback>
-                    <Text className="text-primary-foreground text-xl font-semibold">YA</Text>
+                    <Text className="text-primary-foreground text-xl font-semibold">{session?.user?.name?.charAt(0)}</Text>
                   </AvatarFallback>
                 </Avatar>
                 <View className="flex-1">
-                  <Text className="text-lg font-semibold text-foreground">Yazeed Ahmed</Text>
-                  <Text className="text-sm text-muted-foreground">yazeed@example.com</Text>
-                  <Text className="text-xs text-muted-foreground mt-1">{t('memberSince', { date: 'Dec 2024' })}</Text>
+                  <Text className="text-lg font-semibold text-foreground">{session?.user?.name ?? ''}</Text>
+                  <Text className="text-sm text-muted-foreground">{session?.user?.email ?? ''}</Text>
+                  <Text className="text-xs text-muted-foreground mt-1">{t('memberSince', { date: session?.user?.createdAt ? new Date(session?.user?.createdAt).toLocaleDateString() : '' })}</Text>
                 </View>
                 <Button variant="outline" size="sm" className="rounded-full">
                   <Text className="text-foreground">{t('edit')}</Text>
@@ -100,7 +109,33 @@ export default function ProfileScreen() {
                 <Text className="text-muted-foreground">{language === 'en' ? 'English' : 'العربية'}</Text>
               </Pressable>
 
+
               <Separator />
+              {/*login button && logout button*/}
+              {session?.user ? (
+                <Pressable className="flex-row items-center justify-between py-4" onPress={handleLogout}>
+                  <View className="flex-row items-center gap-3">
+                    <View className="w-9 h-9 rounded-full bg-secondary items-center justify-center">
+                      <Icon as={LogOut} size={18} className="text-foreground" />
+                    </View>
+                    <Text className="text-foreground">{t('logOut')}</Text>
+                  </View>
+                  <Icon as={ChevronRight} size={18} className="text-muted-foreground" />
+                  </Pressable>
+              ) : (
+                <Pressable 
+                className="flex-row items-center justify-between py-4"
+                  onPress={() => navigation.navigate('login' as never)}
+              >
+                <View className="flex-row items-center gap-3">
+                  <View className="w-9 h-9 rounded-full bg-secondary items-center justify-center">
+                    <Icon as={LogIn} size={18} className="text-foreground" />
+                  </View>
+                  <Text className="text-foreground">{t('login')}</Text>
+                </View>
+                <Icon as={ChevronRight} size={18} className="text-muted-foreground" />
+              </Pressable>
+              )}
 
               {/* Dark Mode */}
               <View className="flex-row items-center justify-between py-4">
@@ -110,7 +145,10 @@ export default function ProfileScreen() {
                   </View>
                   <Text className="text-foreground">{t('darkMode')}</Text>
                 </View>
-                <Switch checked={darkMode} onCheckedChange={setDarkMode} />
+                <Switch 
+                  checked={isDark} 
+                  onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')} 
+                />
               </View>
             </CardContent>
           </Card>
@@ -147,12 +185,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Logout */}
-        <View className="px-5 pb-8">
-          <Button variant="outline" className="w-full border-destructive flex-row gap-2">
-            <Icon as={LogOut} size={16} className="text-destructive" />
-            <Text className="text-destructive">{t('logOut')}</Text>
-          </Button>
-        </View>
+        
       </ScrollView>
     </SafeAreaView>
   );

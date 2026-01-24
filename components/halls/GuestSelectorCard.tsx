@@ -69,7 +69,7 @@ export function GuestSelectorCard({
             </View>
             <View className="items-end">
               <Text className="text-xs text-muted-foreground">Venue price</Text>
-              <Text className="font-bold text-primary">${venuePrice.toLocaleString()}</Text>
+              <Text className="font-bold text-primary">{venuePrice.toLocaleString()} sr</Text>
             </View>
           </View>
         </CardContent>

@@ -43,7 +43,7 @@ export function ServicesGrid({ services, selectedServices, guestCount, onToggle 
                   <View className="flex-1">
                     <Text className="text-xs font-medium">{service.name}</Text>
                     <Text className="text-[10px] text-primary font-medium">
-                      +${price?.toLocaleString()}
+                          +{price ? price.toLocaleString() : 0} sr
                       {service.perPerson && <Text className="text-muted-foreground"> /all</Text>}
                     </Text>
                   </View>
