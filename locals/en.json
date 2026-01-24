@@ -114,5 +114,8 @@
   "haveAccount": "Already have an account?",
   "dontHaveAccount": "Don't have an account?",
   "loginError": "Login error",
-  "loginErrorDescription": "Please check your login credentials."
+  "loginErrorDescription": "Please check your login credentials.",
+  "home": "Home",
+  "halls": "Halls",
+  "myBooking": "My Booking"
 }

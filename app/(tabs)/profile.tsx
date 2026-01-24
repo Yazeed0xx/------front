@@ -15,11 +15,12 @@ import i18n from '@/lib/i18n';
 import { useNavigation } from '@react-navigation/native';
 import { authClient } from '@/lib/auth';
 import { router } from 'expo-router';
+import { useTheme } from '@/lib/theme-context';
 
 export default function ProfileScreen() {
   const {data:session} = authClient.useSession() 
   const { t } = useTranslation();
-  const [darkMode, setDarkMode] = useState(false);
+  const { theme, setTheme, isDark } = useTheme();
   const [language, setLanguage] = useState<'en' | 'ar'>(i18n.language as 'en' | 'ar');
   const navigation = useNavigation();
   const changeLanguage = async () => {
@@ -144,7 +145,10 @@ export default function ProfileScreen() {
                   </View>
                   <Text className="text-foreground">{t('darkMode')}</Text>
                 </View>
-                <Switch checked={darkMode} onCheckedChange={setDarkMode} />
+                <Switch 
+                  checked={isDark} 
+                  onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')} 
+                />
               </View>
             </CardContent>
           </Card>
