@@ -55,28 +55,38 @@ export function HallFilterPanel({
 
   return (
     <View className="px-5 mb-4">
-      <Card className="bg-secondary/30 border-0">
+      <Card className="bg-secondary/30 border-0 rounded-2xl overflow-hidden">
         <CardContent className="py-4">
-          <Text className="font-medium mb-2">{t('venueType')}</Text>
+          <Text className="font-medium text-sm text-foreground mb-2.5">{t('venueType')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4 -mx-1">
             <View className="flex-row gap-2 px-1">
               {typeFilters.map((type) => (
                 <Pressable key={type} onPress={() => onChangeType(type)}>
-                  <Badge variant={selectedType === type ? 'default' : 'secondary'} className="px-3 py-1.5">
-                    <Text className="text-xs">{getTypeLabel(type)}</Text>
+                  <Badge
+                    variant={selectedType === type ? 'default' : 'secondary'}
+                    className={`px-3 py-1.5 ${selectedType === type ? '' : 'bg-background/60'}`}
+                  >
+                    <Text className={`text-xs font-medium ${selectedType === type ? 'text-primary-foreground' : 'text-foreground'}`}>
+                      {getTypeLabel(type)}
+                    </Text>
                   </Badge>
                 </Pressable>
               ))}
             </View>
           </ScrollView>
 
-          <Text className="font-medium mb-2">{t('priceRange')}</Text>
+          <Text className="font-medium text-sm text-foreground mb-2.5">{t('priceRange')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1">
             <View className="flex-row gap-2 px-1">
               {priceFilters.map((price) => (
                 <Pressable key={price} onPress={() => onChangePrice(price)}>
-                  <Badge variant={selectedPrice === price ? 'default' : 'secondary'} className="px-3 py-1.5">
-                    <Text className="text-xs">{getPriceLabel(price)}</Text>
+                  <Badge
+                    variant={selectedPrice === price ? 'default' : 'secondary'}
+                    className={`px-3 py-1.5 ${selectedPrice === price ? '' : 'bg-background/60'}`}
+                  >
+                    <Text className={`text-xs font-medium ${selectedPrice === price ? 'text-primary-foreground' : 'text-foreground'}`}>
+                      {getPriceLabel(price)}
+                    </Text>
                   </Badge>
                 </Pressable>
               ))}
@@ -84,8 +94,8 @@ export function HallFilterPanel({
           </ScrollView>
 
           {showClear && (
-            <Button variant="ghost" size="sm" className="mt-3 self-start" onPress={onClear}>
-              <Text className="text-destructive">{t('clearFilters')}</Text>
+            <Button variant="ghost" size="sm" className="mt-4 self-start" onPress={onClear}>
+              <Text className="text-destructive text-sm font-medium">{t('clearFilters')}</Text>
             </Button>
           )}
         </CardContent>

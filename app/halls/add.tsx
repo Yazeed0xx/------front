@@ -1,14 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import {
-  View,
-  TextInput,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-} from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, TextInput, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
@@ -21,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useHall, useUpdateHall } from '@/hooks/api/useHalls';
+import { useCreateHall } from '@/hooks/api/useHalls';
 import { getErrorMessage } from '@/utils/api';
 import { Alert as AlertComponent, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -38,52 +31,31 @@ const hallSchema = z.object({
 
 type HallFormData = z.infer<typeof hallSchema>;
 
-export default function HallDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const hallId = Number(id);
+export default function AddHallScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const { t } = useTranslation();
-  const { data: hall, isLoading, error } = useHall(hallId);
-  const updateMutation = useUpdateHall(hallId);
+  const createHallMutation = useCreateHall();
   const [serverError, setServerError] = useState<string | null>(null);
   const [servicesText, setServicesText] = useState('');
 
   const {
     control,
     handleSubmit,
-    reset,
-    formState: { errors, isDirty },
+    formState: { errors },
   } = useForm<HallFormData>({
     resolver: zodResolver(hallSchema),
     defaultValues: {
       name: '',
       location: '',
       city: '',
-      address: '',
-      capacity: 0,
+      capacity: 100,
       pricing: 0,
       description: '',
+      address: '',
       isAvailable: true,
     },
   });
-
-  // Populate form when hall data loads
-  useEffect(() => {
-    if (hall) {
-      reset({
-        name: hall.name,
-        location: hall.location,
-        city: hall.city,
-        address: hall.address,
-        capacity: hall.capacity,
-        pricing: typeof hall.pricing === 'string' ? parseFloat(hall.pricing) : hall.pricing,
-        description: hall.description ?? '',
-        isAvailable: hall.isAvailable,
-      });
-      setServicesText((hall.services ?? []).join(', '));
-    }
-  }, [hall, reset]);
 
   const placeholderColor = useMemo(() => {
     const isDark = (colorScheme ?? 'light') === 'dark';
@@ -100,7 +72,7 @@ export default function HallDetailScreen() {
     </View>
   );
 
-  const handleUpdate = async (data: HallFormData) => {
+  const handleCreate = async (data: HallFormData) => {
     setServerError(null);
 
     const services = servicesText
@@ -109,41 +81,15 @@ export default function HallDetailScreen() {
       .filter(Boolean);
 
     try {
-      await updateMutation.mutateAsync({
+      await createHallMutation.mutateAsync({
         ...data,
         services: services.length > 0 ? services : undefined,
       });
       router.back();
-    } catch (err) {
-      setServerError(getErrorMessage(err));
+    } catch (error) {
+      setServerError(getErrorMessage(error));
     }
   };
-
-  if (isLoading) {
-    return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-background" edges={['top']}>
-        <ActivityIndicator size="large" />
-      </SafeAreaView>
-    );
-  }
-
-  if (error || !hall) {
-    return (
-      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-        <View className="flex-1 items-center justify-center px-5">
-          <AlertComponent variant="destructive" icon={AlertCircle}>
-            <AlertTitle>{t('error')}</AlertTitle>
-            <AlertDescription>
-              {error ? getErrorMessage(error) : t('hallNotFound')}
-            </AlertDescription>
-          </AlertComponent>
-          <Button className="mt-4" onPress={() => router.back()}>
-            <Text className="text-primary-foreground">{t('goBack')}</Text>
-          </Button>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
@@ -165,7 +111,7 @@ export default function HallDetailScreen() {
                 onPress={() => router.back()}>
                 <Icon as={ArrowLeft} size={18} className="text-foreground" />
               </Button>
-              <Text className="text-xl font-semibold text-foreground">{t('editHall')}</Text>
+              <Text className="text-xl font-semibold text-foreground">{t('addHall')}</Text>
             </View>
 
             <Card className="rounded-2xl border border-border/60">
@@ -192,7 +138,7 @@ export default function HallDetailScreen() {
                         onBlur={onBlur}
                         placeholder={t('hallNamePlaceholder')}
                         placeholderTextColor={placeholderColor}
-                        editable={!updateMutation.isPending}
+                        editable={!createHallMutation.isPending}
                         className="h-11 rounded-xl border border-border bg-card px-4 text-foreground"
                         cursorColor="currentColor"
                       />
@@ -214,7 +160,7 @@ export default function HallDetailScreen() {
                         onBlur={onBlur}
                         placeholder={t('locationPlaceholder')}
                         placeholderTextColor={placeholderColor}
-                        editable={!updateMutation.isPending}
+                        editable={!createHallMutation.isPending}
                         className="h-11 rounded-xl border border-border bg-card px-4 text-foreground"
                         cursorColor="currentColor"
                       />
@@ -236,35 +182,13 @@ export default function HallDetailScreen() {
                         onBlur={onBlur}
                         placeholder={t('cityPlaceholder')}
                         placeholderTextColor={placeholderColor}
-                        editable={!updateMutation.isPending}
+                        editable={!createHallMutation.isPending}
                         className="h-11 rounded-xl border border-border bg-card px-4 text-foreground"
                         cursorColor="currentColor"
                       />
                     )}
                   />
                   {errors.city && renderError(errors.city.message)}
-                </View>
-
-                {/* Address */}
-                <View className="mb-3">
-                  <Text className="mb-2 text-sm text-foreground">{t('address')} *</Text>
-                  <Controller
-                    control={control}
-                    name="address"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <TextInput
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        placeholder={t('addressPlaceholder')}
-                        placeholderTextColor={placeholderColor}
-                        editable={!updateMutation.isPending}
-                        className="h-11 rounded-xl border border-border bg-card px-4 text-foreground"
-                        cursorColor="currentColor"
-                      />
-                    )}
-                  />
-                  {errors.address && renderError(errors.address.message)}
                 </View>
 
                 {/* Capacity & Pricing Row */}
@@ -282,7 +206,7 @@ export default function HallDetailScreen() {
                           placeholder="100"
                           placeholderTextColor={placeholderColor}
                           keyboardType="number-pad"
-                          editable={!updateMutation.isPending}
+                          editable={!createHallMutation.isPending}
                           className="h-11 rounded-xl border border-border bg-card px-4 text-foreground"
                           cursorColor="currentColor"
                         />
@@ -303,7 +227,7 @@ export default function HallDetailScreen() {
                           placeholder="5000"
                           placeholderTextColor={placeholderColor}
                           keyboardType="number-pad"
-                          editable={!updateMutation.isPending}
+                          editable={!createHallMutation.isPending}
                           className="h-11 rounded-xl border border-border bg-card px-4 text-foreground"
                           cursorColor="currentColor"
                         />
@@ -328,13 +252,35 @@ export default function HallDetailScreen() {
                         placeholderTextColor={placeholderColor}
                         multiline
                         numberOfLines={4}
-                        editable={!updateMutation.isPending}
+                        editable={!createHallMutation.isPending}
                         className="h-24 rounded-xl border border-border bg-card px-4 py-3 text-foreground"
                         textAlignVertical="top"
                         cursorColor="currentColor"
                       />
                     )}
                   />
+                </View>
+
+                {/* Address */}
+                <View className="mb-3">
+                  <Text className="mb-2 text-sm text-foreground">{t('address')} *</Text>
+                  <Controller
+                    control={control}
+                    name="address"
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <TextInput
+                        value={value}
+                        onChangeText={onChange}
+                        onBlur={onBlur}
+                        placeholder={t('addressPlaceholder')}
+                        placeholderTextColor={placeholderColor}
+                        editable={!createHallMutation.isPending}
+                        className="h-11 rounded-xl border border-border bg-card px-4 text-foreground"
+                        cursorColor="currentColor"
+                      />
+                    )}
+                  />
+                  {errors.address && renderError(errors.address.message)}
                 </View>
 
                 {/* Services */}
@@ -345,7 +291,7 @@ export default function HallDetailScreen() {
                     onChangeText={setServicesText}
                     placeholder={t('servicesPlaceholder')}
                     placeholderTextColor={placeholderColor}
-                    editable={!updateMutation.isPending}
+                    editable={!createHallMutation.isPending}
                     className="h-11 rounded-xl border border-border bg-card px-4 text-foreground"
                     cursorColor="currentColor"
                   />
@@ -367,7 +313,7 @@ export default function HallDetailScreen() {
                       <Switch
                         checked={value}
                         onCheckedChange={onChange}
-                        disabled={updateMutation.isPending}
+                        disabled={createHallMutation.isPending}
                       />
                     )}
                   />
@@ -375,10 +321,10 @@ export default function HallDetailScreen() {
 
                 <Button
                   className="w-full rounded-xl"
-                  onPress={handleSubmit(handleUpdate)}
-                  disabled={updateMutation.isPending}>
+                  onPress={handleSubmit(handleCreate)}
+                  disabled={createHallMutation.isPending}>
                   <Text className="font-medium text-primary-foreground">
-                    {updateMutation.isPending ? t('saving') : t('save')}
+                    {createHallMutation.isPending ? t('creating') : t('addHall')}
                   </Text>
                 </Button>
               </CardContent>

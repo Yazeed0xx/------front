@@ -9,7 +9,19 @@ import { Badge } from '@/components/ui/badge';
 import { Icon } from '@/components/ui/icon';
 import { Calendar, Users, MapPin, Clock, FileText } from 'lucide-react-native';
 
-const bookingRequests = [
+type BookingRequest = {
+  id: number;
+  hall: string;
+  requester: string;
+  date: string;
+  time: string;
+  guests: number;
+  location: string;
+  status: 'pending' | 'accepted' | 'declined';
+  notes?: string;
+};
+
+const bookingRequests: BookingRequest[] = [
   { id: 1, hall: 'Grand Ballroom', requester: 'Sara Ahmed', date: 'Jan 12, 2025', time: '7:00 PM', guests: 180, location: 'Riyadh', status: 'pending', notes: 'Needs stage and projector' },
   { id: 2, hall: 'Rose Garden Estate', requester: 'Mohammed Ali', date: 'Jan 20, 2025', time: '6:30 PM', guests: 140, location: 'Jeddah', status: 'accepted' },
   { id: 3, hall: 'Skyline Lounge', requester: 'Lina Omar', date: 'Feb 2, 2025', time: '8:00 PM', guests: 90, location: 'Riyadh', status: 'declined', notes: 'Price negotiation failed' },
@@ -107,4 +119,3 @@ export default function BookingRequestDetail() {
     </SafeAreaView>
   );
 }
-

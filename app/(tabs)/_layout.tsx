@@ -2,28 +2,38 @@ import React, { useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { Tabs, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { authClient } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-context';
 import { useTranslation } from 'react-i18next';
 
-export default function _layout() {
-  const { data: session, isPending } = authClient.useSession();
+export default function TabsLayout() {
+  const { company, isLoading, isAuthenticated } = useAuth();
   const { t } = useTranslation();
 
   useEffect(() => {
-    if (!isPending && !session?.user) {
-      router.replace('/register');
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        router.replace('/login');
+      } else if (company?.status === 'pending') {
+        router.replace('/status/pending');
+      } else if (company?.status === 'rejected') {
+        router.replace('/status/rejected');
+      } else if (company?.status === 'suspended') {
+        router.replace('/status/suspended');
+      }
+      // 'approved' companies proceed to render tabs
     }
-  }, [isPending, session]);
+  }, [isLoading, isAuthenticated, company?.status]);
 
-  if (isPending) {
+  if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator />
+        <ActivityIndicator size="large" />
       </View>
     );
   }
 
-  if (!session?.user) {
+  // Don't render tabs if not authenticated or not approved
+  if (!isAuthenticated || company?.status !== 'approved') {
     return null;
   }
 
@@ -32,25 +42,27 @@ export default function _layout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: t('home'),
-          tabBarIcon: ({ color, size }) => <Ionicons name="home" color={color} size={size} />,
+          title: t('dashboard'),
+          tabBarIcon: ({ color, size }) => <Ionicons name="grid" color={color} size={size} />,
         }}
       />
 
       <Tabs.Screen
         name="halls"
         options={{
-          title: t('halls'),
-          tabBarIcon: ({ color, size }) => <Ionicons name="list" color={color} size={size} />,
+          title: t('myHalls'),
+          tabBarIcon: ({ color, size }) => <Ionicons name="business" color={color} size={size} />,
         }}
       />
+
       <Tabs.Screen
         name="myBooking"
         options={{
-          title: t('myBooking'),
-          tabBarIcon: ({ color, size }) => <Ionicons name="book" color={color} size={size} />,
+          title: t('bookings'),
+          tabBarIcon: ({ color, size }) => <Ionicons name="calendar" color={color} size={size} />,
         }}
       />
+
       <Tabs.Screen
         name="profile"
         options={{

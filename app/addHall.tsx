@@ -10,26 +10,23 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useColorScheme } from 'nativewind';
 import { THEME } from '@/lib/theme';
-import { useAddHalls } from '@/hooks/api/useAddHalls';
+import { useCreateHall } from '@/hooks/api/useHalls';
+
 const addHallSchema = z.object({
   name: z.string().min(3),
-  description: z.string().min(3),
-  price_per_day: z.number().min(0),
-  price_per_hour: z.number().min(0).optional(),
-  capacity: z.number().min(0),
+  description: z.string().min(3).optional(),
+  capacity: z.number().min(1),
+  location: z.string().min(3),
+  pricing: z.number().min(0),
   address: z.string().min(3),
   city: z.string().min(2),
-  original_price: z.number().min(0).optional(),
-  services: z.array(z.string()),
-  rules: z.array(z.string()),
-  amenities: z.array(z.string()),
-  images: z.array(z.string()),
+  services: z.array(z.string()).optional(),
 });
 
 type AddHallForm = z.infer<typeof addHallSchema>;
 
 export default function AddHallScreen() {
-  const { addHall } = useAddHalls();
+  const { mutate: addHall, isPending } = useCreateHall();
   const { colorScheme } = useColorScheme();
   const placeholderColor = React.useMemo(() => {
     const isDark = (colorScheme ?? 'light') === 'dark';
@@ -38,31 +35,30 @@ export default function AddHallScreen() {
     return `hsla(${h}, ${s}%, ${l}%, 0.8)`;
   }, [colorScheme]);
 
-  const { control, handleSubmit, formState: { errors } } = useForm<AddHallForm>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<AddHallForm>({
     resolver: zodResolver(addHallSchema),
     defaultValues: {
       name: '',
       description: '',
-      price_per_day: 0,
-      price_per_hour: undefined,
       capacity: 0,
+      location: '',
+      pricing: 0,
       address: '',
       city: '',
-      original_price: undefined,
       services: [],
-      rules: [],
-      amenities: [],
-      images: [],
     },
   });
 
-  const onSubmit: (data: AddHallForm) => void = (data) => {
-    addHall(data);
-    router.back();
+  const onSubmit = (data: AddHallForm) => {
+    addHall({ ...data, isAvailable: true }, { onSuccess: () => router.back() });
   };
 
   const renderError = (message?: string) => (
-    <View className="min-h-[16px] mt-1">
+    <View className="mt-1 min-h-[16px]">
       <Text className={`text-xs ${message ? 'text-destructive' : 'text-transparent'}`}>
         {message || 'placeholder'}
       </Text>
@@ -71,18 +67,23 @@ export default function AddHallScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
-        <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-          <View className="flex-1 px-5 pt-4 pb-6 gap-4">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1">
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled">
+          <View className="flex-1 gap-4 px-5 pb-6 pt-4">
             <View>
               <Text className="text-2xl font-semibold text-foreground">Add hall</Text>
-              <Text className="text-muted-foreground text-sm">Create a new venue listing</Text>
+              <Text className="text-sm text-muted-foreground">Create a new venue listing</Text>
             </View>
 
-            <Card className="border border-border/60 rounded-2xl">
+            <Card className="rounded-2xl border border-border/60 bg-red-800">
               <CardContent className="py-4">
                 <View className="mb-4">
-                  <Text className="text-sm text-foreground mb-2">Name</Text>
+                  <Text className="mb-2 text-sm text-foreground">Name</Text>
                   <Controller
                     control={control}
                     name="name"
@@ -93,7 +94,7 @@ export default function AddHallScreen() {
                         onBlur={onBlur}
                         placeholder="Hall name"
                         placeholderTextColor={placeholderColor}
-                        className="h-11 px-4 rounded-xl bg-card text-foreground border border-border"
+                        className="h-11 rounded-xl border border-border bg-card px-4 text-foreground"
                       />
                     )}
                   />
@@ -101,7 +102,7 @@ export default function AddHallScreen() {
                 </View>
 
                 <View className="mb-4">
-                  <Text className="text-sm text-foreground mb-2">Description</Text>
+                  <Text className="mb-2 text-sm text-foreground">Description</Text>
                   <Controller
                     control={control}
                     name="description"
@@ -112,7 +113,7 @@ export default function AddHallScreen() {
                         onBlur={onBlur}
                         placeholder="Describe the hall"
                         placeholderTextColor={placeholderColor}
-                        className="min-h-20 px-4 py-3 rounded-xl bg-card text-foreground border border-border"
+                        className="min-h-20 rounded-xl border border-border bg-card px-4 py-3 text-foreground"
                         multiline
                       />
                     )}
@@ -122,7 +123,7 @@ export default function AddHallScreen() {
 
                 <View className="mb-4 flex-row gap-3">
                   <View className="flex-1">
-                    <Text className="text-sm text-foreground mb-2">Capacity</Text>
+                    <Text className="mb-2 text-sm text-foreground">Capacity</Text>
                     <Controller
                       control={control}
                       name="capacity"
@@ -133,17 +134,17 @@ export default function AddHallScreen() {
                           placeholder="0"
                           keyboardType="numeric"
                           placeholderTextColor={placeholderColor}
-                          className="h-11 px-4 rounded-xl bg-card text-foreground border border-border"
+                          className="h-11 rounded-xl border border-border bg-card px-4 text-foreground"
                         />
                       )}
                     />
                     {renderError(errors.capacity?.message)}
                   </View>
                   <View className="flex-1">
-                    <Text className="text-sm text-foreground mb-2">Price per day (SAR)</Text>
+                    <Text className="mb-2 text-sm text-foreground">Pricing (SAR)</Text>
                     <Controller
                       control={control}
-                      name="price_per_day"
+                      name="pricing"
                       render={({ field: { onChange, value } }) => (
                         <TextInput
                           value={value?.toString() ?? ''}
@@ -151,56 +152,36 @@ export default function AddHallScreen() {
                           placeholder="0"
                           keyboardType="numeric"
                           placeholderTextColor={placeholderColor}
-                          className="h-11 px-4 rounded-xl bg-card text-foreground border border-border"
+                          className="h-11 rounded-xl border border-border bg-card px-4 text-foreground"
                         />
                       )}
                     />
-                    {renderError(errors.price_per_day?.message)}
+                    {renderError(errors.pricing?.message)}
                   </View>
+                </View>
+
+                <View className="mb-4">
+                  <Text className="mb-2 text-sm text-foreground">Location</Text>
+                  <Controller
+                    control={control}
+                    name="location"
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <TextInput
+                        value={value}
+                        onChangeText={onChange}
+                        onBlur={onBlur}
+                        placeholder="e.g. Downtown"
+                        placeholderTextColor={placeholderColor}
+                        className="h-11 rounded-xl border border-border bg-card px-4 text-foreground"
+                      />
+                    )}
+                  />
+                  {renderError(errors.location?.message)}
                 </View>
 
                 <View className="mb-4 flex-row gap-3">
                   <View className="flex-1">
-                    <Text className="text-sm text-foreground mb-2">Price per hour (SAR)</Text>
-                    <Controller
-                      control={control}
-                      name="price_per_hour"
-                      render={({ field: { onChange, value } }) => (
-                        <TextInput
-                          value={value?.toString() ?? ''}
-                          onChangeText={(txt) => onChange(txt ? Number(txt) : undefined)}
-                          placeholder="Optional"
-                          keyboardType="numeric"
-                          placeholderTextColor={placeholderColor}
-                          className="h-11 px-4 rounded-xl bg-card text-foreground border border-border"
-                        />
-                      )}
-                    />
-                    {renderError(errors.price_per_hour?.message)}
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-sm text-foreground mb-2">Original price (SAR)</Text>
-                    <Controller
-                      control={control}
-                      name="original_price"
-                      render={({ field: { onChange, value } }) => (
-                        <TextInput
-                          value={value?.toString() ?? ''}
-                          onChangeText={(txt) => onChange(txt ? Number(txt) : undefined)}
-                          placeholder="Optional"
-                          keyboardType="numeric"
-                          placeholderTextColor={placeholderColor}
-                          className="h-11 px-4 rounded-xl bg-card text-foreground border border-border"
-                        />
-                      )}
-                    />
-                    {renderError(errors.original_price?.message)}
-                  </View>
-                </View>
-
-                <View className="mb-4 flex-row gap-3">
-                  <View className="flex-1">
-                    <Text className="text-sm text-foreground mb-2">Address</Text>
+                    <Text className="mb-2 text-sm text-foreground">Address</Text>
                     <Controller
                       control={control}
                       name="address"
@@ -210,14 +191,14 @@ export default function AddHallScreen() {
                           onChangeText={onChange}
                           placeholder="Street address"
                           placeholderTextColor={placeholderColor}
-                          className="h-11 px-4 rounded-xl bg-card text-foreground border border-border"
+                          className="h-11 rounded-xl border border-border bg-card px-4 text-foreground"
                         />
                       )}
                     />
                     {renderError(errors.address?.message)}
                   </View>
                   <View className="flex-1">
-                    <Text className="text-sm text-foreground mb-2">City</Text>
+                    <Text className="mb-2 text-sm text-foreground">City</Text>
                     <Controller
                       control={control}
                       name="city"
@@ -227,7 +208,7 @@ export default function AddHallScreen() {
                           onChangeText={onChange}
                           placeholder="City"
                           placeholderTextColor={placeholderColor}
-                          className="h-11 px-4 rounded-xl bg-card text-foreground border border-border"
+                          className="h-11 rounded-xl border border-border bg-card px-4 text-foreground"
                         />
                       )}
                     />
@@ -235,16 +216,14 @@ export default function AddHallScreen() {
                   </View>
                 </View>
 
-           
-
                 <View className="mb-4">
-                  <Text className="text-sm text-foreground mb-2">Services (comma separated)</Text>
+                  <Text className="mb-2 text-sm text-foreground">Services (comma separated)</Text>
                   <Controller
                     control={control}
                     name="services"
                     render={({ field: { onChange, value } }) => (
                       <TextInput
-                        value={value.join(', ')}
+                        value={(value ?? []).join(', ')}
                         onChangeText={(txt) =>
                           onChange(
                             txt
@@ -253,67 +232,22 @@ export default function AddHallScreen() {
                               .filter(Boolean)
                           )
                         }
-                        placeholder="Catering, DJ, Photography"
+                        placeholder="e.g. free coffee, valet parking"
                         placeholderTextColor={placeholderColor}
-                        className="h-11 px-4 rounded-xl bg-card text-foreground border border-border"
+                        className="h-11 rounded-xl border border-border bg-card px-4 text-foreground"
                       />
                     )}
                   />
                   {renderError(errors.services?.message)}
                 </View>
 
-                <View className="mb-4">
-                  <Text className="text-sm text-foreground mb-2">Amenities (comma separated)</Text>
-                  <Controller
-                    control={control}
-                    name="amenities"
-                    render={({ field: { onChange, value } }) => (
-                      <TextInput
-                        value={value.join(', ')}
-                        onChangeText={(txt) =>
-                          onChange(
-                            txt
-                              .split(',')
-                              .map((s) => s.trim())
-                              .filter(Boolean)
-                          )
-                        }
-                        placeholder="Parking, AV, Stage"
-                        placeholderTextColor={placeholderColor}
-                        className="h-11 px-4 rounded-xl bg-card text-foreground border border-border"
-                      />
-                    )}
-                  />
-                  {renderError(errors.amenities?.message)}
-                </View>
-
-                <View className="mb-4">
-                  <Text className="text-sm text-foreground mb-2">Rules (comma separated)</Text>
-                  <Controller
-                    control={control}
-                    name="rules"
-                    render={({ field: { onChange, value } }) => (
-                      <TextInput
-                        value={value.join(', ')}
-                        onChangeText={(txt) =>
-                          onChange(
-                            txt
-                              .split(',')
-                              .map((s) => s.trim())
-                              .filter(Boolean)
-                          )
-                        }
-                        placeholder="No smoking, No pets"
-                        placeholderTextColor={placeholderColor}
-                        className="h-11 px-4 rounded-xl bg-card text-foreground border border-border"
-                      />
-                    )}
-                  />
-                  {renderError(errors.rules?.message)}
-                </View>
-
-                <Button className="w-full rounded-xl" onPress={handleSubmit(onSubmit)}>
-                  <Text className="text-primary-foreground font-medium">Save hall</Text>
+                <Button
+                  className="w-full rounded-xl"
+                  onPress={handleSubmit(onSubmit)}
+                  disabled={isPending}>
+                  <Text className="font-medium text-primary-foreground">
+                    {isPending ? 'Saving...' : 'Save hall'}
+                  </Text>
                 </Button>
               </CardContent>
             </Card>

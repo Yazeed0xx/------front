@@ -1,123 +1,144 @@
 import React, { useState } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View, FlatList, RefreshControl, ActivityIndicator, Alert, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/text';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
-import { Calendar, Users, MapPin, Clock } from 'lucide-react-native';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Calendar, Users, MapPin, Check, X, Clock } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import { useCompanyBookings, useAcceptBooking, useRejectBooking } from '@/hooks/api/useBookings';
+import type { Booking } from '@/types/booking';
+import { BOOKING_STATUS_COLORS } from '@/types/booking';
 
-type Booking = {
-  id: number;
-  venueKey: string;
-  locationKey: string;
-  date: string;
-  time: string;
-  guests: number;
-  status: 'confirmed' | 'pending' | 'completed';
-  serviceKeys: string[];
-  total: number;
-};
+type TabType = 'pending' | 'accepted' | 'rejected';
 
-const statusColors: Record<Booking['status'], string> = {
-  confirmed: 'bg-green-500/10 text-green-700',
-  pending: 'bg-amber-500/10 text-amber-700',
-  completed: 'bg-blue-500/10 text-blue-700',
-};
-
-const upcomingBookings: Booking[] = [
-  {
-    id: 1,
-    venueKey: 'theGrandBallroom',
-    locationKey: 'downtown',
-    date: 'Jan 12, 2025',
-    time: '7:00 PM',
-    guests: 180,
-    status: 'confirmed',
-    serviceKeys: ['catering', 'dj'],
-    total: 5200,
-  },
-];
-
-const previousBookings: Booking[] = [
-  {
-    id: 2,
-    venueKey: 'roseGardenEstate',
-    locationKey: 'countryside',
-    date: 'Dec 20, 2024',
-    time: '6:30 PM',
-    guests: 140,
-    status: 'completed',
-    serviceKeys: ['catering', 'photography'],
-    total: 3600,
-  },
-];
-
-function BookingCard({ booking, isUpcoming }: { booking: Booking; isUpcoming: boolean }) {
+function BookingCard({
+  booking,
+  onAccept,
+  onReject,
+  isAccepting,
+  isRejecting,
+}: {
+  booking: Booking;
+  onAccept: () => void;
+  onReject: () => void;
+  isAccepting: boolean;
+  isRejecting: boolean;
+}) {
   const { t } = useTranslation();
+  const isPending = booking.status === 'pending';
+  const statusColor = BOOKING_STATUS_COLORS[booking.status];
+
   return (
-    <Card className="mb-3 border border-border/60">
+    <Card className="mx-4 mb-3 overflow-hidden rounded-2xl border border-border/60">
       <CardContent className="py-4">
         {/* Header */}
-        <View className="flex-row items-start justify-between mb-3">
-          <View className="flex-1">
-            <Text className="font-semibold text-base text-foreground">{t(booking.venueKey)}</Text>
-            <View className="flex-row items-center gap-1 mt-1">
+        <View className="mb-3 flex-row items-start justify-between">
+          <View className="flex-1 pr-3">
+            <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
+              {booking.hall?.name ?? ''}
+            </Text>
+            <View className="mt-1 flex-row items-center gap-1">
               <Icon as={MapPin} size={12} className="text-muted-foreground" />
-              <Text className="text-xs text-muted-foreground">{t(booking.locationKey)}</Text>
+              <Text className="text-xs text-muted-foreground" numberOfLines={1}>
+                {booking.hall?.location ?? ''}, {booking.hall?.city ?? ''}
+              </Text>
             </View>
           </View>
-          <Badge variant="outline" className={statusColors[booking.status]}>
-            <Text className="text-xs capitalize">{t(booking.status)}</Text>
+          <Badge
+            variant="outline"
+            className={`${statusColor?.bg ?? ''} ${statusColor?.text ?? ''} px-2.5 py-1`}>
+            <Text className="text-[11px] font-medium">{t(booking.status)}</Text>
           </Badge>
         </View>
 
-        {/* Details Grid */}
-        <View className="flex-row gap-4 mb-3">
+        {/* Customer Info */}
+        <View className="mb-3 rounded-lg bg-secondary/40 px-3 py-2">
           <View className="flex-row items-center gap-2">
-            <Icon as={Calendar} size={14} className="text-primary" />
-            <Text className="text-sm text-foreground">{booking.date}</Text>
+            <Icon as={Users} size={14} className="text-muted-foreground" />
+            <Text className="text-sm font-medium text-foreground">
+              {booking.user?.userName ?? ''}
+            </Text>
           </View>
-          <View className="flex-row items-center gap-2">
-            <Icon as={Clock} size={14} className="text-primary" />
-            <Text className="text-sm text-foreground">{booking.time}</Text>
-          </View>
-          <View className="flex-row items-center gap-2">
-            <Icon as={Users} size={14} className="text-primary" />
-            <Text className="text-sm text-foreground">{booking.guests}</Text>
-          </View>
+          <Text className="ml-5 mt-0.5 text-xs text-muted-foreground">
+            {booking.user?.email ?? ''}
+          </Text>
         </View>
 
-        {/* Services */}
-        <View className="flex-row flex-wrap gap-1.5 mb-3">
-          {booking.serviceKeys.map((serviceKey) => (
-            <Badge key={serviceKey} variant="secondary" className="px-2 py-0.5">
-              <Text className="text-[11px]">{t(serviceKey)}</Text>
-            </Badge>
-          ))}
+        {/* Booking Details */}
+        <View className="mb-3 flex-row flex-wrap gap-x-4 gap-y-2">
+          <View className="flex-row items-center gap-1.5">
+            <Icon as={Calendar} size={14} className="text-primary" />
+            <Text className="text-sm text-foreground">{booking.bookingDate}</Text>
+          </View>
+          {booking.startTime && booking.endTime && (
+            <View className="flex-row items-center gap-1.5">
+              <Icon as={Clock} size={14} className="text-primary" />
+              <Text className="text-sm text-foreground">
+                {booking.startTime.slice(0, 5)} - {booking.endTime.slice(0, 5)}
+              </Text>
+            </View>
+          )}
         </View>
+
+        {/* Special Requests */}
+        {booking.specialRequests && (
+          <View className="mb-3 rounded-lg bg-muted/30 px-3 py-2">
+            <Text className="text-xs text-muted-foreground">{booking.specialRequests}</Text>
+          </View>
+        )}
 
         {/* Footer */}
-        <View className="flex-row items-center justify-between pt-2 border-t border-border/40">
+        <View className="gap-3 border-t border-border/40 pt-3">
           <View>
-            <Text className="text-xs text-muted-foreground">{t('total')}</Text>
-            <Text className="font-bold text-primary text-lg">{booking.total.toLocaleString()} sr</Text>
+            <Text className="text-[11px] uppercase tracking-wide text-muted-foreground">
+              {t('total')}
+            </Text>
+            <View className="flex-row items-baseline gap-1">
+              <Text className="text-lg font-bold text-primary">
+                {Number(booking.totalPrice ?? 0).toLocaleString()}
+              </Text>
+              <Text className="text-sm font-medium text-primary">SR</Text>
+            </View>
           </View>
-          {isUpcoming ? (
+          {isPending && (
             <View className="flex-row gap-2">
-              <Button variant="outline" size="sm">
-                <Text className="text-foreground text-sm">{t('modify')}</Text>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 rounded-lg border-destructive"
+                onPress={onReject}
+                disabled={isAccepting || isRejecting}>
+                <View className="flex-row items-center gap-1.5">
+                  <Icon as={X} size={14} className="text-destructive" />
+                  <Text className="text-sm text-destructive">
+                    {isRejecting ? '...' : t('reject')}
+                  </Text>
+                </View>
               </Button>
-              <Button size="sm">
-                <Text className="text-primary-foreground text-sm">{t('viewDetails')}</Text>
+              <Button
+                size="sm"
+                className="flex-1 rounded-lg"
+                onPress={onAccept}
+                disabled={isAccepting || isRejecting}>
+                <View className="flex-row items-center gap-1.5">
+                  <Icon as={Check} size={14} className="text-primary-foreground" />
+                  <Text className="text-sm font-medium text-primary-foreground">
+                    {isAccepting ? '...' : t('accept')}
+                  </Text>
+                </View>
               </Button>
             </View>
-          ) : (
-            <Button variant="outline" size="sm">
-              <Text className="text-foreground text-sm">{t('bookAgain')}</Text>
-            </Button>
           )}
         </View>
       </CardContent>
@@ -125,71 +146,163 @@ function BookingCard({ booking, isUpcoming }: { booking: Booking; isUpcoming: bo
   );
 }
 
-function EmptyState({ type }: { type: 'upcoming' | 'previous' }) {
+function EmptyState() {
   const { t } = useTranslation();
   return (
-    <View className="items-center justify-center py-12">
-      <Text className="text-4xl mb-3">📅</Text>
-      <Text className="text-muted-foreground text-center">
-        {type === 'upcoming' ? t('noUpcomingBookings') : t('noPreviousBookings')}
-      </Text>
-      {type === 'upcoming' && (
-        <Button className="mt-4">
-          <Text className="text-primary-foreground">{t('browseHalls')}</Text>
-        </Button>
-      )}
+    <View className="flex-1 items-center justify-center py-20">
+      <Icon as={Calendar} size={48} className="mb-4 text-muted-foreground" />
+      <Text className="mb-1 text-lg font-semibold text-foreground">{t('noBookingsYet')}</Text>
+      <Text className="px-8 text-center text-muted-foreground">{t('noBookingsDescription')}</Text>
     </View>
   );
 }
 
 export default function MyBookingScreen() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'upcoming' | 'previous'>('upcoming');
+  const [activeTab, setActiveTab] = useState<TabType>('pending');
+  const [refreshing, setRefreshing] = useState(false);
 
-  const bookings = activeTab === 'upcoming' ? upcomingBookings : previousBookings;
+  const { data, isLoading, refetch } = useCompanyBookings(1, 50, activeTab);
+  const acceptMutation = useAcceptBooking();
+  const rejectMutation = useRejectBooking();
+
+  const [processingId, setProcessingId] = useState<number | null>(null);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
+
+  const handleAccept = async (bookingId: number) => {
+    setProcessingId(bookingId);
+    try {
+      await acceptMutation.mutateAsync(bookingId);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to accept booking');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectBookingId, setRejectBookingId] = useState<number | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+
+  const handleReject = (bookingId: number) => {
+    setRejectBookingId(bookingId);
+    setRejectReason('');
+    setRejectDialogOpen(true);
+  };
+
+  const confirmReject = async () => {
+    if (!rejectBookingId) return;
+    if (rejectReason.length < 10) {
+      Alert.alert(t('error'), t('reasonMinLength'));
+      return;
+    }
+    setRejectDialogOpen(false);
+    setProcessingId(rejectBookingId);
+    try {
+      await rejectMutation.mutateAsync({ id: rejectBookingId, reason: rejectReason });
+    } catch (error) {
+      Alert.alert(t('error'), t('rejectFailed'));
+    } finally {
+      setProcessingId(null);
+      setRejectBookingId(null);
+    }
+  };
+
+  const renderBooking = ({ item }: { item: Booking }) => (
+    <BookingCard
+      booking={item}
+      onAccept={() => handleAccept(item.id)}
+      onReject={() => handleReject(item.id)}
+      isAccepting={processingId === item.id && acceptMutation.isPending}
+      isRejecting={processingId === item.id && rejectMutation.isPending}
+    />
+  );
+
+  const tabs: { key: TabType; label: string }[] = [
+    { key: 'pending', label: t('pending') },
+    { key: 'accepted', label: t('accepted') },
+    { key: 'rejected', label: t('rejected') },
+  ];
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="px-5 pt-4 pb-6">
-          <Text className="text-2xl font-bold text-foreground mb-1">{t('myBookings')}</Text>
-          
-          {/* Tabs */}
-          <View className="flex-row gap-2 mb-4">
-            <Button
-              variant={activeTab === 'upcoming' ? 'default' : 'outline'}
-              size="sm"
-              className="flex-1 rounded-full"
-              onPress={() => setActiveTab('upcoming')}
-            >
-              <Text className={activeTab === 'upcoming' ? 'text-primary-foreground' : 'text-foreground'}>
-                {t('upcoming')}
-              </Text>
-            </Button>
-            <Button
-              variant={activeTab === 'previous' ? 'default' : 'outline'}
-              size="sm"
-              className="flex-1 rounded-full"
-              onPress={() => setActiveTab('previous')}
-            >
-              <Text className={activeTab === 'previous' ? 'text-primary-foreground' : 'text-foreground'}>
-                {t('previous')}
-              </Text>
-            </Button>
-          </View>
+      {/* Header */}
+      <View className="px-5 pb-3 pt-4">
+        <Text className="text-2xl font-bold text-foreground">{t('incomingBookings')}</Text>
+        <Text className="mt-0.5 text-sm text-muted-foreground">
+          {data?.meta?.total ?? 0} {t('bookings').toLowerCase()}
+        </Text>
+      </View>
 
-          {/* Bookings List */}
-          {bookings.length === 0 ? (
-            <EmptyState type={activeTab} />
-          ) : (
-            <View>
-              {bookings.map((booking) => (
-                <BookingCard key={booking.id} booking={booking} isUpcoming={activeTab === 'upcoming'} />
-              ))}
-            </View>
-          )}
+      {/* Tabs */}
+      <View className="mb-3 px-5">
+        <View className="flex-row gap-2 rounded-xl bg-secondary/50 p-1">
+          {tabs.map((tab) => (
+            <Button
+              key={tab.key}
+              variant={activeTab === tab.key ? 'default' : 'ghost'}
+              size="sm"
+              className={`h-9 flex-1 rounded-lg ${activeTab === tab.key ? '' : 'bg-transparent'}`}
+              onPress={() => setActiveTab(tab.key)}>
+              <Text
+                className={`text-sm font-medium ${activeTab === tab.key ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
+                {tab.label}
+              </Text>
+            </Button>
+          ))}
         </View>
-      </ScrollView>
+      </View>
+
+      {isLoading && !data ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" />
+        </View>
+      ) : (
+        <FlatList
+          data={data?.data ?? []}
+          renderItem={renderBooking}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={{ paddingBottom: 32, flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={EmptyState}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        />
+      )}
+
+      {/* Reject Reason Dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('reject')}</DialogTitle>
+            <DialogDescription>{t('rejectReasonPrompt')}</DialogDescription>
+          </DialogHeader>
+          <TextInput
+            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground"
+            placeholder={t('rejectReasonPlaceholder')}
+            value={rejectReason}
+            onChangeText={setRejectReason}
+            multiline
+            numberOfLines={3}
+            style={{ minHeight: 80, textAlignVertical: 'top' }}
+          />
+          <DialogFooter>
+            <Button variant="outline" onPress={() => setRejectDialogOpen(false)}>
+              <Text className="text-foreground">{t('cancel')}</Text>
+            </Button>
+            <Button
+              variant="destructive"
+              onPress={confirmReject}
+              disabled={rejectReason.length < 10}>
+              <Text className="text-destructive-foreground">{t('reject')}</Text>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SafeAreaView>
   );
 }

@@ -1,5 +1,4 @@
-import React, { useMemo } from 'react';
-import { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, useRouter } from 'expo-router';
@@ -7,84 +6,78 @@ import { useColorScheme } from 'nativewind';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
 import { AlertCircle } from 'lucide-react-native';
 import { THEME } from '@/lib/theme';
 import { useTranslation } from 'react-i18next';
 import { useForm, Controller } from 'react-hook-form';
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { authClient } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-context';
+import { loginSchema, type LoginFormData } from '@/types/auth';
+import { getErrorMessage } from '@/utils/api';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1, 'invalid credentials'),
-});
-
-type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const { t } = useTranslation();
+  const { login } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const { control, handleSubmit, formState: { errors } } = useForm<LoginForm>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
 
-//   const [remember, setRemember] = React.useState(true);
-//   const handleForgotPassword = () => {
-//     // TODO: link to forgot password flow when available
-//     router.back();
-//   };
-
   const placeholderColor = useMemo(() => {
     const isDark = (colorScheme ?? 'light') === 'dark';
-    const primaryForegroundHsl = isDark ? THEME.dark.primaryForeground : THEME.light.primaryForeground;
-    const [h, s, l] = primaryForegroundHsl.match(/\d+/g)?.map(Number) || [0, 0, 0];
-    return `hsla(${h}, ${s}%, ${l}%, 0.65)`;
+    const hsl = isDark ? THEME.dark.mutedForeground : THEME.light.mutedForeground;
+    const [h, s, l] = hsl.match(/\d+/g)?.map(Number) || [0, 0, 60];
+    return `hsla(${h}, ${s}%, ${l}%, 0.8)`;
   }, [colorScheme]);
 
   const renderError = (message?: string) => (
-    <View className="min-h-[18px] mt-1">
+    <View className="mt-1 min-h-[18px]">
       <Text className={`text-xs ${message ? 'text-destructive' : 'text-transparent'}`}>
         {message || 'placeholder'}
       </Text>
     </View>
   );
 
-  const [serverError, setServerError] = useState<string | null>(null);
+  const handleLogin = async (data: LoginFormData) => {
+    setIsLoading(true);
+    setServerError(null);
 
-  const handleLogin = async (data: LoginForm) => {
-   const {  error } = await authClient.signIn.email({ email: data.email, password: data.password });
-   if (error) {
-    setServerError(error.message || t('loginErrorDescription'));
-   } else {
-    router.replace('/(tabs)');
-   }  
+    try {
+      await login(data.email, data.password);
+      // Auth context will handle routing based on company status
+      router.replace('/(tabs)');
+    } catch (error) {
+      setServerError(getErrorMessage(error));
+    } finally {
+      setIsLoading(false);
+    }
   };
+
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        className="flex-1"
-      >
-        <View className="flex-1 px-5 pt-4 pb-6">
+        className="flex-1">
+        <View className="flex-1 px-5 pb-6 pt-4">
           <View className="mb-6">
-            <Text className="text-xl font-semibold text-foreground">{t('login')}</Text>
+            <Text className="text-xl font-semibold text-foreground">{t('companyLogin')}</Text>
           </View>
 
           <View className="mb-4">
-            {/* <Text className="text-foreground text-2xl font-bold">{t('welcome')}</Text> */}
-            <Text className="text-muted-foreground mt-1 text-sm">{t('loginDescription')}</Text>
+            <Text className="mt-1 text-sm text-muted-foreground">{t('loginDescription')}</Text>
           </View>
 
-          <Card className="border border-border/60 rounded-2xl">
+          <Card className="rounded-2xl border border-border/60">
             <CardContent className="py-4">
               {serverError && (
                 <View className="mb-3">
@@ -94,8 +87,9 @@ export default function LoginScreen() {
                   </Alert>
                 </View>
               )}
+
               <View className="mb-4">
-                <Text className="text-sm text-foreground mb-2">{t('email')}</Text>
+                <Text className="mb-2 text-sm text-foreground">{t('email')}</Text>
                 <Controller
                   control={control}
                   name="email"
@@ -108,16 +102,18 @@ export default function LoginScreen() {
                       placeholderTextColor={placeholderColor}
                       keyboardType="email-address"
                       autoCapitalize="none"
-                      className="h-11 px-4 rounded-xl bg-card text-foreground border border-border"
+                      autoCorrect={false}
+                      editable={!isLoading}
+                      className="h-11 rounded-xl border border-border bg-card px-4 text-foreground"
                       cursorColor="currentColor"
                     />
                   )}
                 />
-                {/* {errors.email ? renderError(errors.email.message) : renderError()} */}
+                {errors.email ? renderError(errors.email.message) : renderError()}
               </View>
 
               <View className="mb-4">
-                <Text className="text-sm text-foreground mb-2">{t('password')}</Text>
+                <Text className="mb-2 text-sm text-foreground">{t('password')}</Text>
                 <Controller
                   control={control}
                   name="password"
@@ -129,32 +125,32 @@ export default function LoginScreen() {
                       placeholder={t('passwordPlaceholder')}
                       placeholderTextColor={placeholderColor}
                       secureTextEntry
-                      className="h-11 px-4 rounded-xl bg-card text-foreground border border-border"
+                      editable={!isLoading}
+                      className="h-11 rounded-xl border border-border bg-card px-4 text-foreground"
                       cursorColor="currentColor"
                     />
                   )}
                 />
                 {errors.password ? renderError(errors.password.message) : renderError()}
-                
               </View>
+
+              <Button
+                className="mb-3 w-full rounded-xl"
+                onPress={handleSubmit(handleLogin)}
+                disabled={isLoading}>
+                <Text className="font-medium text-primary-foreground">
+                  {isLoading ? t('signingIn') : t('signIn')}
+                </Text>
+              </Button>
+
               <View className="items-center">
                 <Text className="text-sm text-muted-foreground">
                   {t('dontHaveAccount')}{' '}
                   <Link href="/register" replace>
-                    <Text className="text-primary font-medium">{t('register')}</Text>
+                    <Text className="font-medium text-primary">{t('register')}</Text>
                   </Link>
                 </Text>
               </View>
-
-             
-
-              <Button className="w-full rounded-xl mb-3" onPress={handleSubmit(handleLogin)}>
-                <Text className="text-primary-foreground font-medium">{t('signIn')}</Text>
-              </Button>
-
-              {/* <Button variant="outline" className="w-full rounded-xl" onPress={() => router.replace('/(tabs)')}>
-                <Text className="text-foreground font-medium">{t('continueAsGuest')}</Text>
-              </Button> */}
             </CardContent>
           </Card>
         </View>
@@ -162,4 +158,3 @@ export default function LoginScreen() {
     </SafeAreaView>
   );
 }
-
